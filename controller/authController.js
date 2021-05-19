@@ -13,16 +13,17 @@ const signIn = (id) => {
   })
 }
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = (user, statusCode, req, res) => {
   const token = signIn(user._id)
   const cookieOption = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnle: true,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
   }
 
-  // if (process.env.NODE_ENV === 'production') cookieOption.secure
+  cookieOption.secure = true
   res.cookie('jwt', token, cookieOption)
 
   user.password = undefined
@@ -42,7 +43,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
   })
-  createSendToken(user, 201, res)
+  createSendToken(user, 201, req, res)
 })
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body
@@ -58,7 +59,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Please provide a valid email and password', 401))
   }
 
-  createSendToken(currentUser, 200, res)
+  createSendToken(currentUser, 200, req, res)
 })
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -159,5 +160,5 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.passwordResetToken = undefined
   user.passwordResetExpiresIn = undefined
   await user.save()
-  createSendToken(user, 200, res)
+  createSendToken(user, 200, req, res)
 })

@@ -11,6 +11,8 @@ const globalErrorHandler = require('./controller/errorController')
 const AppError = require('./utils/appError')
 const app = express()
 
+app.enable('trust proxy')
+
 app.use(express.json())
 
 app.use(cors)
